@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today's Word</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f9f9f9;
+      font-family: 'Segoe UI', sans-serif;
+      flex-direction: column;
+    }
+
+    .small-text {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+
+    .large-text {
+      font-size: 3rem;
+      color: #222;
+      text-align: center;
+    }
+
+    img {
+      margin-top: 1rem;
+      max-width: 80%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="small-text">La parola di oggi è:</div>
+  <div class="large-text" id="word">---</div>
+
+  <script>
+    const words = [
+      "Abarico",
+      "Abbandonico",
+      "Abulico",
+      "Academico",
+      "Accademico",
+      "Accadico",
+      "Acetico",
+      "Acetilcolinico",
+      "Acetilenico",
+      "Acetilico",
+      "Acetonemico",
+      "Acherontico",
+      "Aciclico",
+      "Acquametrico",
+      "Acquatico",
+      "Acquedottistico",
+      "Acrilico",
+      "Acritico",
+      "Acrobatico",
+      "Acronico",
+      "Acustico",
+      "Adamitico",
+      "Adenilico",
+      "Adiabatico",
+      "Adinamico",
+      "Adipico",
+      "Adipolitico",
+      "Adrenalinico",
+      "Adrenergico",
+      "Adrenocinetico",
+      "Adrenolitico",
+      "Adriatico",
+      "Aerobico",
+      "Aerodinamico",
+      "Aeroelastico",
+      "Aeroelettrico",
+      "Aeroelettronico",
+      "Aeronautico",
+      "Aerostatico",
+      "Aerotecnico",
+      "Afasico",
+      "Affaristico",
+      "Aforistico",
+      "Afroasiatico",
+      "Agamico",
+      "Agiografico",
+      "Agnostico",
+      "Agonistico",
+      "Agrobiologico",
+      "Agrotecnico",
+      "Alchemico",
+      "Alchilico",
+      "Alchimico",
+      "Alchimistico",
+      "Alcolico",
+      "Alcolimetrico",
+      "Alcoolico",
+      "Aldeidico",
+      "Alfabetico",
+      "Alfanumerico",
+      "Algebrico",
+      "Algico",
+      "Algoritmico",
+      "Alifatico",
+      "Allegorico",
+      "Allelico",
+      "Allergenico",
+      "Allergico",
+      "Allergologico",
+      "Allopatrico",
+      "Allosterico",
+      "Allotropico",
+      "Alluminico",
+      "Aloetico",
+      "Alogenidrico",
+      "Alogico",
+      "Alpinistico",
+      "Altaico",
+      "Altimetrico",
+      "Altruistico",
+      "Amagnetico",
+      "Amarico",
+      "Amaurotico",
+      "Amazzonico",
+      "Amebico",
+      "Amico",
+      "Amletico",
+      "Ammidico",
+      "Amminico",
+      "Amministrativistico",
+      "Ammonico",
+      "Ammoniotelico",
+      "Amniotico",
+      "Amperometrico",
+      "Anabolico",
+      "Anacronistico",
+      "Anaerobico",
+      "Anagenetico",
+      "Anagrafico",
+      "Analcolico",
+      "Analcoolico",
+      "Analettico",
+      "Analgesico",
+      "Analitico",
+      "Analogico",
+      "Anamnestico",
+      "Anamorfico",
+      "Anancastico",
+      "Anaplastico",
+      "Anarchico",
+      "Anastatico",
+      "Anastomotico",
+      "Anatolico",
+      "Anatomico",
+      "Anatossico",
+      "Androgenico",
+      "Androginico",
+      "Andrologico",
+      "Andromonoico",
+      "Anecoico",
+      "Aneddotico",
+      "Anelastico",
+      "Anemico",
+      "Anestesiologico",
+      "Anestetico",
+      "Aneurismatico",
+      "Anfibiotico",
+      "Anfifilico",
+      "Anfiprotico",
+      "Angelico",
+      "Angiocentrico",
+      "Anglico",
+      "Animistico",
+      "Anionico",
+      "Anisosillabico",
+      "Annalistico",
+      "Annibalico",
+      "Anodico",
+      "Anomalistico",
+      "Anoressico",
+      "Anossico",
+      "Anseatico",
+      "Ansiolitico",
+      "Antalgico",
+      "Antartico",
+      "Antiaccademico",
+      "Antiacustico",
+      "Antialcolico",
+      "Antiallergico",
+      "Antianemico",
+      "Antiaristotelico",
+      "Antiartritico",
+      "Antiasmatico",
+      "Antiatomico",
+      "Antibatterico",
+      "Antibechico",
+      "Antibiotico",
+      "Antiblastico",
+      "Anticiclonico",
+      "Antico",
+      "Anticolerico",
+      "Anticolinesterasico",
+      "Anticomunistico",
+      "Anticonformistico",
+      "Antidemocratico",
+      "Antidermatitico",
+      "Antidiabetico",
+      "Antidiarroico",
+      "Antidifterico",
+      "Antidiuretico",
+      "Antidogmatico",
+      "Antidolorifico",
+      "Antidotico",
+      "Antidromico",
+      "Antidropico",
+      "Antieconomico",
+      "Antielmintico",
+      "Antiemetico",
+      "Antiemofilico",
+      "Antiemolitico",
+      "Antiemorragico",
+      "Antiepilettico",
+      "Antiestetico",
+      "Antiferroelettrico",
+      "Antiferromagnetico",
+      "Antifibrinolitico",
+      "Antifrastico",
+      "Antigenico",
+      "Antigiuridico",
+      "Antilipemico",
+      "Antimagnetico",
+      "Antimalarico",
+      "Antimicrobico",
+      "Antimissilistico",
+      "Antimitotico",
+      "Antimonico",
+      "Antinevralgico",
+      "Antinevritico",
+      "Antinomico",
+      "Antinsulinico",
+      "Antiofidico",
+      "Antipatico",
+      "Antipertossico",
+      "Antipiretico",
+      "Antipoliomielitico",
+      "Antipolitico",
+      "Antiprotonico",
+      "Antipsicotico",
+      "Antirabbico",
+      "Antirachitico",
+      "Antireumatico",
+      "Antiromantico",
+      "Antiscorbutico",
+      "Antiseborroico",
+      "Antisettico",
+      "Antisismico",
+      "Antispasmodico",
+      "Antispastico",
+      "Antistatico",
+      "Antistorico",
+      "Antitarmico",
+      "Antitetanico",
+      "Antitetico",
+      "Antitifico",
+      "Antitossico",
+      "Antropico",
+      "Antropocentrico",
+      "Antropocosmico",
+      "Antropofagico",
+      "Antropologico",
+      "Antropometrico",
+      "Antropomorfico",
+      "Aortico",
+      "Apartitico",
+      "Apatico",
+      "Aperiodico",
+      "Apneumonico",
+      "Apocalittico",
+      "Apocromatico",
+      "Apodittico",
+      "Apofantico",
+      "Apolitico",
+      "Apologetico",
+      "Apologistico",
+      "Apoptotico",
+      "Aporetico",
+      "Apotropaico",
+      "Appenninico",
+      "Aprico",
+      "Aptico",
+      "Arabico",
+      "Arachidonico",
+      "Aracnofobico",
+      "Araldico",
+      "Aramaico",
+      "Arcadico",
+      "Arcaico",
+      "Archeologico",
+      "Archeozoico",
+      "Archetipico",
+      "Areico",
+      "Areteico",
+      "Arilico",
+      "Aristocratico",
+      "Aristotelico",
+      "Aritmetico",
+      "Armonico",
+      "Aromatico",
+      "Arsenico",
+      "Arsenorganico",
+      "Arsinico",
+      "Arteriosclerotico",
+      "Artico",
+      "Artistico",
+      "Artritico",
+      "Asburgico",
+      "Ascetico",
+      "Asettico",
+      "Asfittico",
+      "Asiatico",
+      "Asintomatico",
+      "Asintotico",
+      "Assiologico",
+      "Assiomatico",
+      "Assolutistico",
+      "Assonometrico",
+      "Astenico",
+      "Astigmatico",
+      "Astrofisico",
+      "Astronautico",
+      "Astronomico",
+      "Atarassico",
+      "Atavico",
+      "Ateromasico",
+      "Atipico",
+      "Atlantico",
+      "Atletico",
+      "Atmosferico",
+      "Atomico",
+      "Atomistico",
+      "Atopico",
+      "Atossico",
+      "Atrofico",
+      "Attico",
+      "Attinico",
+      "Attonico",
+      "Audiologico",
+      "Audiometrico",
+      "Aulico",
+      "Auratico",
+      "Aurico",
+      "Austroungarico",
+      "Autarchico",
+      "Autentico",
+      "Autistico",
+      "Autobiografico",
+      "Autocratico",
+      "Autolitico",
+      "Autologico",
+      "Automatico",
+      "Automobilistico",
+      "Autoptico",
+      "Autosomico",
+      "Autotelico",
+      "Auxologico",
+      "Avionico",
+      "Avveniristico",
+      "Axenico",
+      "Azionistico",
+      "Azoico",
+      "Azotico",
+      "Azotidrico",
+    ];
+
+    const reverse = function (s) {
+      return s.split("").reverse().join("");
+    }
+
+    const hashFunc = function (str, seed = 0) {
+      let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+      for (let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 0x85ebca77);
+        h2 = Math.imul(h2 ^ ch, 0xc2b2ae3d);
+      }
+      h1 ^= Math.imul(h1 ^ (h2 >>> 15), 0x735a2d97);
+      h2 ^= Math.imul(h2 ^ (h1 >>> 15), 0xcaf649a9);
+      h1 ^= h2 >>> 16; h2 ^= h1 >>> 16;
+      return 2097152 * (h2 >>> 0) + (h1 >>> 11);
+    }
+    const wordElement = document.getElementById('word');
+
+    const today = new Date();
+    const dateString = today.toISOString().slice(0, 10); // YYYY-MM-DD
+    const dateSeed = hashFunc(dateString);
+    const wordIndex = dateSeed % words.length;
+    const todayWord = words[wordIndex];
+
+    const mode = Math.random();
+
+    if (mode < 0.8) {
+      wordElement.textContent = todayWord;
+    } else if (mode < 0.9) {
+      wordElement.textContent = "The Game";
+    } else {
+      wordElement.innerHTML = 'Never Gonna Give You Up<br><img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWwxNG5qajVtdWRxZmJwYWtzODR0dmpoZ2Fxc2pub2VwbGx4MWlkYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Vuw9m5wXviFIQ/giphy.gif" alt="Rick Astley GIF">';
+    }
+  </script>
+</body>
+
+</html>
