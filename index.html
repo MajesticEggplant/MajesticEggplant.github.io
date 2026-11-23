@@ -1,20 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Today's Word</title>
+  <title>Today's Words</title>
   <style>
     body {
       margin: 0;
+      padding: 2rem 1rem;
+      box-sizing: border-box;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
+      overflow-x: hidden;
       background-color: #f9f9f9;
       font-family: 'Segoe UI', sans-serif;
       flex-direction: column;
+    }
+
+    body.holding,
+    body.aiming {
+      cursor: crosshair;
     }
 
     .small-text {
@@ -29,6 +37,101 @@
       text-align: center;
     }
 
+    .def {
+      font-size: 0.95rem;
+      font-style: italic;
+      color: #777;
+      text-align: center;
+      max-width: 40ch;
+      margin-bottom: 1.5rem;
+    }
+
+    #word, #word2, #word3 {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pop {
+      position: fixed;
+      font-size: 3rem;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .particle {
+      position: fixed;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .counter {
+      margin-top: 1rem;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chicken {
+      position: fixed;
+      left: 0;
+      top: 0;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .item {
+      position: fixed;
+      font-size: 1.6rem;
+      line-height: 1;
+      transform: translate(-50%, -100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .pile {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 40px;
+      height: 20px;
+      border-radius: 50%;
+      background: radial-gradient(#c8902e 35%, transparent 40%) 0 0 / 6px 6px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .tool {
+      position: fixed;
+      bottom: 1rem;
+      font-size: 2rem;
+      background: #fff;
+      border: 2px solid #ddd;
+      border-radius: 50%;
+      width: 3.5rem;
+      height: 3.5rem;
+      cursor: pointer;
+      z-index: 3;
+    }
+
+    #seed {
+      right: 1rem;
+    }
+
+    #gun {
+      left: 1rem;
+    }
+
+    #fire {
+      left: 5.5rem;
+    }
+
+    body.holding #seed,
+    body.aiming #gun {
+      border-color: #c8902e;
+    }
+
     img {
       margin-top: 1rem;
       max-width: 80%;
@@ -37,349 +140,442 @@
 </head>
 
 <body>
-  <div class="small-text">La parola di oggi è:</div>
+  <div class="small-text">Le parole di oggi sono:</div>
+
   <div class="large-text" id="word">---</div>
+  <div class="def" id="wordDef"></div>
+
+  <div class="large-text" id="word2">---</div>
+  <div class="def" id="word2Def"></div>
+
+  <div class="large-text" id="word3">---</div>
+  <div class="def" id="word3Def"></div>
+
+  <div class="counter" id="counter" title="Clicca">
+    <div class="small-text">Il survey sul quantum computing è in ritardo di:</div>
+    <div class="large-text" id="elapsed" style="font-size: 2rem">---</div>
+  </div>
+
+  <button class="tool" id="seed" title="Prendi un po' di semi">🌾</button>
+  <button class="tool" id="gun" title="Spara ai polli">🎯</button>
+  <button class="tool" id="fire" title="Cuoci tutti i polli">🔥</button>
 
   <script>
-    const words = [
-      "Abarico",
-      "Abbandonico",
-      "Abulico",
-      "Academico",
-      "Accademico",
-      "Accadico",
-      "Acetico",
-      "Acetilcolinico",
-      "Acetilenico",
-      "Acetilico",
-      "Acetonemico",
-      "Acherontico",
-      "Aciclico",
-      "Acquametrico",
-      "Acquatico",
-      "Acquedottistico",
-      "Acrilico",
-      "Acritico",
-      "Acrobatico",
-      "Acronico",
-      "Acustico",
-      "Adamitico",
-      "Adenilico",
-      "Adiabatico",
-      "Adinamico",
-      "Adipico",
-      "Adipolitico",
-      "Adrenalinico",
-      "Adrenergico",
-      "Adrenocinetico",
-      "Adrenolitico",
-      "Adriatico",
-      "Aerobico",
-      "Aerodinamico",
-      "Aeroelastico",
-      "Aeroelettrico",
-      "Aeroelettronico",
-      "Aeronautico",
-      "Aerostatico",
-      "Aerotecnico",
-      "Afasico",
-      "Affaristico",
-      "Aforistico",
-      "Afroasiatico",
-      "Agamico",
-      "Agiografico",
-      "Agnostico",
-      "Agonistico",
-      "Agrobiologico",
-      "Agrotecnico",
-      "Alchemico",
-      "Alchilico",
-      "Alchimico",
-      "Alchimistico",
-      "Alcolico",
-      "Alcolimetrico",
-      "Alcoolico",
-      "Aldeidico",
-      "Alfabetico",
-      "Alfanumerico",
-      "Algebrico",
-      "Algico",
-      "Algoritmico",
-      "Alifatico",
-      "Allegorico",
-      "Allelico",
-      "Allergenico",
-      "Allergico",
-      "Allergologico",
-      "Allopatrico",
-      "Allosterico",
-      "Allotropico",
-      "Alluminico",
-      "Aloetico",
-      "Alogenidrico",
-      "Alogico",
-      "Alpinistico",
-      "Altaico",
-      "Altimetrico",
-      "Altruistico",
-      "Amagnetico",
-      "Amarico",
-      "Amaurotico",
-      "Amazzonico",
-      "Amebico",
-      "Amico",
-      "Amletico",
-      "Ammidico",
-      "Amminico",
-      "Amministrativistico",
-      "Ammonico",
-      "Ammoniotelico",
-      "Amniotico",
-      "Amperometrico",
-      "Anabolico",
-      "Anacronistico",
-      "Anaerobico",
-      "Anagenetico",
-      "Anagrafico",
-      "Analcolico",
-      "Analcoolico",
-      "Analettico",
-      "Analgesico",
-      "Analitico",
-      "Analogico",
-      "Anamnestico",
-      "Anamorfico",
-      "Anancastico",
-      "Anaplastico",
-      "Anarchico",
-      "Anastatico",
-      "Anastomotico",
-      "Anatolico",
-      "Anatomico",
-      "Anatossico",
-      "Androgenico",
-      "Androginico",
-      "Andrologico",
-      "Andromonoico",
-      "Anecoico",
-      "Aneddotico",
-      "Anelastico",
-      "Anemico",
-      "Anestesiologico",
-      "Anestetico",
-      "Aneurismatico",
-      "Anfibiotico",
-      "Anfifilico",
-      "Anfiprotico",
-      "Angelico",
-      "Angiocentrico",
-      "Anglico",
-      "Animistico",
-      "Anionico",
-      "Anisosillabico",
-      "Annalistico",
-      "Annibalico",
-      "Anodico",
-      "Anomalistico",
-      "Anoressico",
-      "Anossico",
-      "Anseatico",
-      "Ansiolitico",
-      "Antalgico",
-      "Antartico",
-      "Antiaccademico",
-      "Antiacustico",
-      "Antialcolico",
-      "Antiallergico",
-      "Antianemico",
-      "Antiaristotelico",
-      "Antiartritico",
-      "Antiasmatico",
-      "Antiatomico",
-      "Antibatterico",
-      "Antibechico",
-      "Antibiotico",
-      "Antiblastico",
-      "Anticiclonico",
-      "Antico",
-      "Anticolerico",
-      "Anticolinesterasico",
-      "Anticomunistico",
-      "Anticonformistico",
-      "Antidemocratico",
-      "Antidermatitico",
-      "Antidiabetico",
-      "Antidiarroico",
-      "Antidifterico",
-      "Antidiuretico",
-      "Antidogmatico",
-      "Antidolorifico",
-      "Antidotico",
-      "Antidromico",
-      "Antidropico",
-      "Antieconomico",
-      "Antielmintico",
-      "Antiemetico",
-      "Antiemofilico",
-      "Antiemolitico",
-      "Antiemorragico",
-      "Antiepilettico",
-      "Antiestetico",
-      "Antiferroelettrico",
-      "Antiferromagnetico",
-      "Antifibrinolitico",
-      "Antifrastico",
-      "Antigenico",
-      "Antigiuridico",
-      "Antilipemico",
-      "Antimagnetico",
-      "Antimalarico",
-      "Antimicrobico",
-      "Antimissilistico",
-      "Antimitotico",
-      "Antimonico",
-      "Antinevralgico",
-      "Antinevritico",
-      "Antinomico",
-      "Antinsulinico",
-      "Antiofidico",
-      "Antipatico",
-      "Antipertossico",
-      "Antipiretico",
-      "Antipoliomielitico",
-      "Antipolitico",
-      "Antiprotonico",
-      "Antipsicotico",
-      "Antirabbico",
-      "Antirachitico",
-      "Antireumatico",
-      "Antiromantico",
-      "Antiscorbutico",
-      "Antiseborroico",
-      "Antisettico",
-      "Antisismico",
-      "Antispasmodico",
-      "Antispastico",
-      "Antistatico",
-      "Antistorico",
-      "Antitarmico",
-      "Antitetanico",
-      "Antitetico",
-      "Antitifico",
-      "Antitossico",
-      "Antropico",
-      "Antropocentrico",
-      "Antropocosmico",
-      "Antropofagico",
-      "Antropologico",
-      "Antropometrico",
-      "Antropomorfico",
-      "Aortico",
-      "Apartitico",
-      "Apatico",
-      "Aperiodico",
-      "Apneumonico",
-      "Apocalittico",
-      "Apocromatico",
-      "Apodittico",
-      "Apofantico",
-      "Apolitico",
-      "Apologetico",
-      "Apologistico",
-      "Apoptotico",
-      "Aporetico",
-      "Apotropaico",
-      "Appenninico",
-      "Aprico",
-      "Aptico",
-      "Arabico",
-      "Arachidonico",
-      "Aracnofobico",
-      "Araldico",
-      "Aramaico",
-      "Arcadico",
-      "Arcaico",
-      "Archeologico",
-      "Archeozoico",
-      "Archetipico",
-      "Areico",
-      "Areteico",
-      "Arilico",
-      "Aristocratico",
-      "Aristotelico",
-      "Aritmetico",
-      "Armonico",
-      "Aromatico",
-      "Arsenico",
-      "Arsenorganico",
-      "Arsinico",
-      "Arteriosclerotico",
-      "Artico",
-      "Artistico",
-      "Artritico",
-      "Asburgico",
-      "Ascetico",
-      "Asettico",
-      "Asfittico",
-      "Asiatico",
-      "Asintomatico",
-      "Asintotico",
-      "Assiologico",
-      "Assiomatico",
-      "Assolutistico",
-      "Assonometrico",
-      "Astenico",
-      "Astigmatico",
-      "Astrofisico",
-      "Astronautico",
-      "Astronomico",
-      "Atarassico",
-      "Atavico",
-      "Ateromasico",
-      "Atipico",
-      "Atlantico",
-      "Atletico",
-      "Atmosferico",
-      "Atomico",
-      "Atomistico",
-      "Atopico",
-      "Atossico",
-      "Atrofico",
-      "Attico",
-      "Attinico",
-      "Attonico",
-      "Audiologico",
-      "Audiometrico",
-      "Aulico",
-      "Auratico",
-      "Aurico",
-      "Austroungarico",
-      "Autarchico",
-      "Autentico",
-      "Autistico",
-      "Autobiografico",
-      "Autocratico",
-      "Autolitico",
-      "Autologico",
-      "Automatico",
-      "Automobilistico",
-      "Autoptico",
-      "Autosomico",
-      "Autotelico",
-      "Auxologico",
-      "Avionico",
-      "Avveniristico",
-      "Axenico",
-      "Azionistico",
-      "Azoico",
-      "Azotico",
-      "Azotidrico",
-    ];
+    const wordsA = {
+      "Abarico": "privo di peso; detto del punto in cui le attrazioni gravitazionali si annullano",
+      "Abbandonico": "che teme o soffre l'abbandono",
+      "Abulico": "privo di volontà, inerte",
+      "Academico": "variante di accademico",
+      "Accademico": "relativo all'accademia; formale e astratto",
+      "Acetico": "relativo all'aceto o all'acido acetico",
+      "Acetilcolinico": "relativo all'acetilcolina",
+      "Acetilenico": "relativo all'acetilene",
+      "Acetilico": "relativo al gruppo acetile",
+      "Acetonemico": "relativo all'acetonemia",
+      "Acherontico": "relativo all'Acheronte; infernale, tetro",
+      "Aciclico": "privo di ciclo o periodicità",
+      "Acquametrico": "relativo alla misura del contenuto d'acqua",
+      "Acquatico": "che vive o si svolge nell'acqua",
+      "Acquedottistico": "relativo agli acquedotti",
+      "Acrilico": "relativo all'acido acrilico; detto di fibre e colori sintetici",
+      "Acritico": "privo di senso critico",
+      "Acrobatico": "da acrobata; agile e spericolato",
+      "Acronico": "detto di astro che sorge al tramonto del sole",
+      "Acustico": "relativo al suono e all'udito",
+      "Adamitico": "relativo ad Adamo; nudo come Adamo",
+      "Adenilico": "relativo all'adenina",
+      "Adiabatico": "senza scambio di calore con l'esterno",
+      "Adinamico": "privo di forza, debilitato",
+      "Adipico": "relativo all'acido adipico",
+      "Adipolitico": "che scioglie i grassi",
+      "Adrenalinico": "carico di adrenalina; eccitante",
+      "Adrenergico": "che agisce come l'adrenalina",
+      "Adrenocinetico": "che stimola la secrezione di adrenalina",
+      "Adrenolitico": "che blocca l'azione dell'adrenalina",
+      "Adriatico": "relativo al mare Adriatico",
+      "Aerobico": "che richiede ossigeno",
+      "Aerodinamico": "con una forma che riduce la resistenza dell'aria",
+      "Aeroelastico": "relativo alla deformazione delle strutture sotto l'azione dell'aria",
+      "Aeroelettrico": "relativo all'elettricità atmosferica",
+      "Aeroelettronico": "relativo all'elettronica di bordo degli aerei",
+      "Aeronautico": "relativo alla navigazione aerea",
+      "Aerostatico": "relativo all'equilibrio dei gas; detto di palloni e dirigibili",
+      "Aerotecnico": "relativo alla tecnica aeronautica",
+      "Afasico": "affetto da afasia, che ha perso la capacità di parlare",
+      "Affaristico": "da affarista, mosso dal profitto",
+      "Aforistico": "conciso e sentenzioso, come un aforisma",
+      "Afroasiatico": "relativo ad Africa e Asia",
+      "Agamico": "che si riproduce senza fecondazione",
+      "Agiografico": "relativo alle vite dei santi; eccessivamente elogiativo",
+      "Agnostico": "che ritiene inconoscibile l'assoluto",
+      "Agonistico": "relativo alla competizione sportiva",
+      "Agrobiologico": "relativo alla biologia applicata all'agricoltura",
+      "Agrotecnico": "relativo alla tecnica agraria",
+      "Alchemico": "relativo all'alchimia",
+      "Alchilico": "relativo ai gruppi alchilici",
+      "Alchimico": "relativo all'alchimia",
+      "Alchimistico": "da alchimista",
+      "Alcolico": "che contiene alcol",
+      "Alcolimetrico": "relativo alla misura del grado alcolico",
+      "Alcoolico": "variante di alcolico",
+      "Aldeidico": "relativo alle aldeidi",
+      "Alfabetico": "secondo l'ordine dell'alfabeto",
+      "Alfanumerico": "composto di lettere e numeri",
+      "Algebrico": "relativo all'algebra",
+      "Algico": "relativo al dolore",
+      "Algoritmico": "relativo agli algoritmi",
+      "Alifatico": "detto di composti organici a catena aperta",
+      "Allegorico": "che esprime un senso nascosto per immagini",
+      "Allelico": "relativo agli alleli",
+      "Allergenico": "che provoca allergia",
+      "Allergico": "affetto da allergia; insofferente",
+      "Allergologico": "relativo all'allergologia",
+      "Allopatrico": "detto di popolazioni che vivono in aree separate",
+      "Allosterico": "relativo a un sito di un enzima diverso da quello attivo",
+      "Allotropico": "relativo alle diverse forme di uno stesso elemento",
+      "Alluminico": "relativo all'alluminio",
+      "Aloetico": "relativo all'aloe",
+      "Alogenidrico": "relativo agli acidi alogenidrici",
+      "Alogico": "estraneo alla logica",
+      "Alpinistico": "relativo all'alpinismo",
+      "Altaico": "relativo ai monti Altai e alle lingue altaiche",
+      "Altimetrico": "relativo alla misura dell'altitudine",
+      "Altruistico": "che pensa al bene degli altri",
+      "Amagnetico": "non magnetico",
+      "Amarico": "relativo alla lingua semitica dell'Etiopia",
+      "Amaurotico": "relativo all'amaurosi, la cecità",
+      "Amazzonico": "relativo all'Amazzonia",
+      "Amebico": "causato da amebe",
+      "Amico": "legato da affetto e fiducia",
+      "Amletico": "dubbioso e indeciso, come Amleto",
+      "Ammidico": "relativo alle ammidi",
+      "Amminico": "relativo alle ammine",
+      "Amministrativistico": "relativo al diritto amministrativo",
+      "Ammonico": "relativo all'ammonio",
+      "Ammoniotelico": "che espelle l'azoto come ammoniaca",
+      "Amniotico": "relativo all'amnio",
+      "Amperometrico": "relativo alla misura della corrente elettrica",
+      "Anabolico": "che favorisce la sintesi dei tessuti",
+      "Anacronistico": "fuori dal proprio tempo",
+      "Anaerobico": "che vive senza ossigeno",
+      "Anagenetico": "relativo all'evoluzione progressiva di una specie",
+      "Anagrafico": "relativo all'anagrafe",
+      "Analcolico": "privo di alcol",
+      "Analcoolico": "variante di analcolico",
+      "Analettico": "che ridà forza, ricostituente",
+      "Analgesico": "che toglie il dolore",
+      "Analitico": "che procede per analisi",
+      "Analogico": "basato sull'analogia; non digitale",
+      "Anamnestico": "relativo all'anamnesi",
+      "Anamorfico": "che deforma l'immagine secondo un rapporto prestabilito",
+      "Anancastico": "ossessivo-compulsivo",
+      "Anaplastico": "relativo alla perdita di differenziazione delle cellule",
+      "Anarchico": "contrario a ogni autorità",
+      "Anastatico": "detto di ristampa che riproduce fedelmente l'originale",
+      "Anastomotico": "relativo a un'anastomosi",
+      "Anatolico": "relativo all'Anatolia",
+      "Anatomico": "relativo all'anatomia; che si adatta al corpo",
+      "Anatossico": "relativo all'anatossina",
+      "Androgenico": "relativo agli ormoni maschili",
+      "Androginico": "che ha caratteri di entrambi i sessi",
+      "Andrologico": "relativo all'andrologia",
+      "Andromonoico": "detto di pianta con fiori maschili ed ermafroditi",
+      "Anecoico": "privo di eco",
+      "Aneddotico": "fatto di aneddoti",
+      "Anelastico": "privo di elasticità",
+      "Anemico": "affetto da anemia; fiacco",
+      "Anestesiologico": "relativo all'anestesiologia",
+      "Anestetico": "che toglie la sensibilità",
+      "Aneurismatico": "relativo a un aneurisma",
+      "Anfibiotico": "che vive sia in acqua che in terra",
+      "Anfifilico": "con una parte idrofila e una idrofoba",
+      "Anfiprotico": "che può cedere o acquistare protoni",
+      "Angelico": "da angelo; puro e soave",
+      "Angiocentrico": "centrato sui vasi sanguigni",
+      "Anglico": "relativo agli Angli; inglese",
+      "Animistico": "relativo all'animismo",
+      "Anionico": "relativo agli anioni",
+      "Anisosillabico": "con versi di diverso numero di sillabe",
+      "Annalistico": "relativo agli annali",
+      "Annibalico": "relativo ad Annibale",
+      "Anodico": "relativo all'anodo",
+      "Anomalistico": "relativo alle anomalie orbitali",
+      "Anoressico": "affetto da anoressia",
+      "Anossico": "privo di ossigeno",
+      "Anseatico": "relativo alla Lega anseatica",
+      "Ansiolitico": "che riduce l'ansia",
+      "Antalgico": "che calma il dolore",
+      "Antartico": "relativo al polo sud",
+      "Antiaccademico": "contrario all'accademismo",
+      "Antiacustico": "che assorbe o isola il suono",
+      "Antialcolico": "contrario al consumo di alcol",
+      "Antiallergico": "che combatte le allergie",
+      "Antianemico": "che combatte l'anemia",
+      "Antiaristotelico": "contrario alla filosofia di Aristotele",
+      "Antiartritico": "che combatte l'artrite",
+      "Antiasmatico": "che combatte l'asma",
+      "Antiatomico": "che protegge dalle radiazioni atomiche",
+      "Antibatterico": "che combatte i batteri",
+      "Antibechico": "che calma la tosse",
+      "Antibiotico": "che uccide o blocca i microrganismi",
+      "Antiblastico": "che blocca la crescita delle cellule",
+      "Anticiclonico": "relativo all'anticiclone",
+      "Antico": "di un tempo lontano",
+      "Anticolerico": "che combatte il colera",
+      "Anticolinesterasico": "che inibisce la colinesterasi",
+      "Anticomunistico": "contrario al comunismo",
+      "Anticonformistico": "contrario al conformismo",
+      "Antidemocratico": "contrario alla democrazia",
+      "Antidermatitico": "che combatte la dermatite",
+      "Antidiabetico": "che combatte il diabete",
+      "Antidiarroico": "che combatte la diarrea",
+      "Antidifterico": "che combatte la difterite",
+      "Antidiuretico": "che riduce la produzione di urina",
+      "Antidogmatico": "contrario ai dogmi",
+      "Antidolorifico": "che toglie il dolore",
+      "Antidotico": "che fa da antidoto",
+      "Antidromico": "che procede in senso contrario a quello normale",
+      "Antidropico": "che combatte l'idropisia",
+      "Antieconomico": "non conveniente",
+      "Antielmintico": "che combatte i vermi intestinali",
+      "Antiemetico": "che combatte il vomito",
+      "Antiemofilico": "che combatte l'emofilia",
+      "Antiemolitico": "che impedisce la distruzione dei globuli rossi",
+      "Antiemorragico": "che arresta le emorragie",
+      "Antiepilettico": "che combatte l'epilessia",
+      "Antiestetico": "brutto a vedersi",
+      "Antiferroelettrico": "detto di materiale con dipoli elettrici antiparalleli",
+      "Antiferromagnetico": "detto di materiale con momenti magnetici antiparalleli",
+      "Antifibrinolitico": "che impedisce la dissoluzione dei coaguli",
+      "Antifrastico": "che dice il contrario di ciò che intende",
+      "Antigenico": "relativo agli antigeni",
+      "Antigiuridico": "contrario al diritto",
+      "Antilipemico": "che abbassa i grassi nel sangue",
+      "Antimagnetico": "insensibile ai campi magnetici",
+      "Antimalarico": "che combatte la malaria",
+      "Antimicrobico": "che combatte i microbi",
+      "Antimissilistico": "che difende dai missili",
+      "Antimitotico": "che blocca la divisione cellulare",
+      "Antimonico": "relativo all'antimonio",
+      "Antinevralgico": "che calma le nevralgie",
+      "Antinevritico": "che combatte le neuriti",
+      "Antinomico": "contraddittorio",
+      "Antinsulinico": "che contrasta l'azione dell'insulina",
+      "Antiofidico": "contro il veleno dei serpenti",
+      "Antipatico": "che suscita avversione",
+      "Antipertossico": "contro la pertosse",
+      "Antipiretico": "che fa scendere la febbre",
+      "Antipoliomielitico": "contro la poliomielite",
+      "Antipolitico": "contrario alla politica tradizionale",
+      "Antiprotonico": "relativo agli antiprotoni",
+      "Antipsicotico": "che combatte le psicosi",
+      "Antirabbico": "contro la rabbia",
+      "Antirachitico": "contro il rachitismo",
+      "Antireumatico": "contro i reumatismi",
+      "Antiromantico": "contrario al romanticismo",
+      "Antiscorbutico": "contro lo scorbuto",
+      "Antiseborroico": "contro la seborrea",
+      "Antisettico": "che uccide i germi",
+      "Antisismico": "che resiste ai terremoti",
+      "Antispasmodico": "che calma gli spasmi",
+      "Antispastico": "che riduce la spasticità",
+      "Antistatico": "che impedisce l'accumulo di elettricità statica",
+      "Antistorico": "contrario al corso della storia",
+      "Antitarmico": "contro le tarme",
+      "Antitetanico": "contro il tetano",
+      "Antitetico": "opposto, contrapposto",
+      "Antitifico": "contro il tifo",
+      "Antitossico": "che neutralizza le tossine",
+      "Antropico": "dovuto all'uomo",
+      "Antropocentrico": "che pone l'uomo al centro",
+      "Antropocosmico": "relativo al rapporto tra uomo e cosmo",
+      "Antropofagico": "relativo al cannibalismo",
+      "Antropologico": "relativo all'antropologia",
+      "Antropometrico": "relativo alle misure del corpo umano",
+      "Antropomorfico": "dalle sembianze umane",
+      "Aortico": "relativo all'aorta",
+      "Apartitico": "non legato a partiti",
+      "Apatico": "indifferente, privo di emozioni",
+      "Aperiodico": "non periodico",
+      "Apneumonico": "privo di polmoni",
+      "Apocalittico": "catastrofico, da fine del mondo",
+      "Apocromatico": "corretto per le aberrazioni cromatiche",
+      "Apodittico": "evidente, indiscutibile",
+      "Apofantico": "che afferma o nega qualcosa",
+      "Apolitico": "estraneo alla politica",
+      "Apologetico": "in difesa di una dottrina",
+      "Apologistico": "da apologista",
+      "Apoptotico": "relativo all'apoptosi, la morte cellulare programmata",
+      "Aporetico": "che porta a un problema senza soluzione",
+      "Apotropaico": "che allontana il malocchio",
+      "Appenninico": "relativo agli Appennini",
+      "Aprico": "esposto al sole",
+      "Aptico": "relativo al tatto",
+      "Arabico": "arabo",
+      "Arachidonico": "relativo all'acido arachidonico",
+      "Aracnofobico": "che ha paura dei ragni",
+      "Araldico": "relativo all'araldica e agli stemmi",
+      "Aramaico": "relativo agli Aramei e alla loro lingua",
+      "Arcadico": "idillico, pastorale",
+      "Arcaico": "molto antico",
+      "Archeologico": "relativo all'archeologia",
+      "Archeozoico": "relativo all'era più antica della Terra",
+      "Archetipico": "da archetipo, esemplare",
+      "Areico": "privo di corsi d'acqua",
+      "Areteico": "relativo alla virtù",
+      "Arilico": "relativo ai gruppi arilici",
+      "Aristocratico": "nobile, raffinato",
+      "Aristotelico": "relativo ad Aristotele",
+      "Aritmetico": "relativo all'aritmetica",
+      "Armonico": "ben proporzionato, armonioso",
+      "Aromatico": "profumato; detto di composti con anello benzenico",
+      "Arsenico": "relativo all'arsenico, elemento velenoso",
+      "Arsenorganico": "detto di composto organico contenente arsenico",
+      "Arsinico": "relativo alle arsine",
+      "Arteriosclerotico": "affetto da arteriosclerosi",
+      "Artico": "relativo al polo nord",
+      "Artistico": "relativo all'arte",
+      "Artritico": "affetto da artrite",
+      "Asburgico": "relativo agli Asburgo",
+      "Ascetico": "dedito a una vita di rinunce",
+      "Asettico": "privo di germi; freddo, impersonale",
+      "Asfittico": "soffocato; privo di vitalità",
+      "Asiatico": "dell'Asia",
+      "Asintomatico": "privo di sintomi",
+      "Asintotico": "relativo a un asintoto",
+      "Assiologico": "relativo ai valori",
+      "Assiomatico": "evidente come un assioma",
+      "Assolutistico": "relativo all'assolutismo",
+      "Assonometrico": "relativo all'assonometria",
+      "Astenico": "debole, fiacco",
+      "Astigmatico": "affetto da astigmatismo",
+      "Astrofisico": "relativo all'astrofisica",
+      "Astronautico": "relativo all'astronautica",
+      "Astronomico": "relativo agli astri; enorme",
+      "Atarassico": "imperturbabile",
+      "Atavico": "ereditato da antenati lontani",
+      "Ateromasico": "relativo all'ateroma",
+      "Atipico": "non conforme al tipo",
+      "Atlantico": "relativo all'oceano Atlantico",
+      "Atletico": "robusto e agile",
+      "Atmosferico": "relativo all'atmosfera",
+      "Atomico": "relativo all'atomo",
+      "Atomistico": "relativo all'atomismo",
+      "Atopico": "relativo all'atopia, predisposizione allergica",
+      "Atossico": "non tossico",
+      "Atrofico": "affetto da atrofia",
+      "Attico": "dell'Attica",
+      "Attinico": "detto di radiazioni che provocano reazioni chimiche",
+      "Attonico": "privo di tono muscolare",
+      "Audiologico": "relativo all'audiologia",
+      "Audiometrico": "relativo alla misura dell'udito",
+      "Aulico": "solenne, elevato",
+      "Auratico": "dotato di aura",
+      "Aurico": "relativo all'oro",
+      "Austroungarico": "relativo all'Austria-Ungheria",
+      "Autarchico": "autosufficiente",
+      "Autentico": "vero, genuino",
+      "Autistico": "affetto da autismo",
+      "Autobiografico": "relativo alla propria vita",
+      "Autocratico": "dispotico",
+      "Autolitico": "relativo all'autolisi",
+      "Autologico": "proveniente dallo stesso individuo",
+      "Automatico": "che funziona da sé",
+      "Automobilistico": "relativo alle automobili",
+      "Autoptico": "relativo all'autopsia; visto con i propri occhi",
+      "Autosomico": "relativo agli autosomi",
+      "Autotelico": "che ha il fine in sé stesso",
+      "Auxologico": "relativo alla crescita",
+      "Avionico": "relativo all'elettronica aeronautica",
+      "Avveniristico": "proiettato nel futuro",
+      "Axenico": "privo di altri organismi",
+      "Azionistico": "relativo alle azioni societarie",
+      "Azoico": "privo di vita",
+      "Azotico": "relativo all'azoto",
+      "Azotidrico": "relativo all'acido azotidrico",
+    };
 
-    const reverse = function (s) {
-      return s.split("").reverse().join("");
-    }
+    // R...ne e Fr...o pescano dallo stesso mucchio
+    const words2 = {
+      "Ragazzone": "ragazzo grande e grosso",
+      "Ragione": "facoltà di pensare e giudicare",
+      "Raviolone": "grosso raviolo ripieno",
+      "Reazione": "risposta a uno stimolo o a un'azione",
+      "Recensione": "giudizio critico su un'opera",
+      "Redazione": "insieme dei giornalisti di una testata",
+      "Regione": "parte di territorio con caratteri propri",
+      "Religione": "insieme di credenze e riti verso il divino",
+      "Rene": "organo che filtra il sangue e produce l'urina",
+      "Riccone": "persona molto ricca",
+      "Rigatone": "pasta corta e rigata a forma di tubo",
+      "Rimozione": "eliminazione; in psicologia, allontanamento dalla coscienza",
+      "Rinoceronte": "grosso mammifero con uno o due corni sul naso",
+      "Rione": "quartiere di una città",
+      "Ripetizione": "il rifare la stessa cosa",
+      "Riunione": "incontro di più persone per discutere",
+      "Rivoluzione": "cambiamento radicale e improvviso",
+      "Rondine": "uccello migratore dalla coda biforcuta",
+      "Rondone": "uccello simile alla rondine, quasi sempre in volo",
+      "Rospone": "grosso rospo",
+      "Rotazione": "movimento attorno a un asse",
+      "Fradicio": "completamente bagnato",
+      "Frammentato": "diviso in frammenti",
+      "Franco": "schietto, sincero",
+      "Frantumato": "ridotto in pezzi",
+      "Frastagliato": "dal contorno irregolare",
+      "Frastornato": "confuso, stordito",
+      "Fraterno": "da fratello",
+      "Freddo": "a bassa temperatura",
+      "Fregato": "strofinato; imbrogliato",
+      "Frenetico": "agitato, convulso",
+      "Fresco": "leggermente freddo; recente",
+      "Frettoloso": "che ha fretta",
+      "Frigido": "freddo, privo di slancio",
+      "Fringuello": "piccolo uccello canoro",
+      "Fritto": "cotto in olio bollente",
+      "Frivolo": "leggero, superficiale",
+      "Frizzantino": "leggermente frizzante",
+      "Frondoso": "ricco di fronde",
+      "Frugato": "perquisito, rovistato",
+      "Frullato": "sbattuto col frullatore",
+      "Frustrato": "deluso nelle proprie aspettative",
+      "Fruttato": "dal sapore di frutta",
+      "Fruttuoso": "che dà buoni risultati",
+    };
 
+    const wordsN = {
+      "Nano": "di statura molto piccola",
+      "Narciso": "fiore bulboso; persona innamorata di sé",
+      "Narvalo": "cetaceo artico con una lunga zanna a spirale",
+      "Naso": "organo dell'olfatto al centro del viso",
+      "Nastro": "striscia sottile di tessuto o altro materiale",
+      "Naufrago": "chi è scampato a un naufragio",
+      "Negozio": "locale dove si vendono merci",
+      "Nembo": "grossa nube scura",
+      "Neo": "piccola macchia scura sulla pelle",
+      "Nero": "del colore più scuro",
+      "Nervo": "fascio di fibre che trasmette gli impulsi",
+      "Nespolo": "albero che produce le nespole",
+      "Nevischio": "neve minuta mista a pioggia",
+      "Nibbio": "rapace dalla coda forcuta",
+      "Nido": "riparo costruito dagli uccelli per le uova",
+      "Ninnolo": "piccolo oggetto ornamentale",
+      "Nocchiero": "chi guida un'imbarcazione",
+      "Nocciolo": "seme legnoso di un frutto; punto essenziale",
+      "Nodo": "intreccio stretto di fili o corde",
+      "Nonno": "padre del padre o della madre",
+      "Nostromo": "sottufficiale che dirige i marinai",
+      "Notaio": "pubblico ufficiale che autentica gli atti",
+      "Nottambulo": "chi ama stare sveglio di notte",
+      "Novizio": "chi è all'inizio di un'esperienza",
+      "Nubifragio": "pioggia violenta e improvvisa",
+      "Nucleo": "parte centrale",
+      "Nudo": "senza vestiti",
+      "Numero": "simbolo che esprime una quantità",
+      "Nuovo": "fatto da poco",
+    };
+
+    // cyrb53
     const hashFunc = function (str, seed = 0) {
       let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
       for (let i = 0, ch; i < str.length; i++) {
@@ -387,28 +583,560 @@
         h1 = Math.imul(h1 ^ ch, 0x85ebca77);
         h2 = Math.imul(h2 ^ ch, 0xc2b2ae3d);
       }
+
       h1 ^= Math.imul(h1 ^ (h2 >>> 15), 0x735a2d97);
       h2 ^= Math.imul(h2 ^ (h1 >>> 15), 0xcaf649a9);
-      h1 ^= h2 >>> 16; h2 ^= h1 >>> 16;
+      h1 ^= h2 >>> 16;
+      h2 ^= h1 >>> 16;
+
       return 2097152 * (h2 >>> 0) + (h1 >>> 11);
     }
-    const wordElement = document.getElementById('word');
 
     const today = new Date();
-    const dateString = today.toISOString().slice(0, 10); // YYYY-MM-DD
-    const dateSeed = hashFunc(dateString);
-    const wordIndex = dateSeed % words.length;
-    const todayWord = words[wordIndex];
+    const dateString = today.toISOString().slice(0, 10); // data UTC: in Italia le parole cambiano all'una di notte
+
+    // Ogni riga ha il suo seed, altrimenti con liste lunghe uguali uscirebbero sempre accoppiate
+    const pick = (dict, seed) => {
+      const entries = Object.entries(dict);
+      return entries[hashFunc(dateString, seed) % entries.length];
+    };
+
+    const $ = id => document.getElementById(id);
+
+    const [a, aDef] = pick(wordsA, 0);
+    const [w2, w2Def] = pick(words2, 1);
+    const [n, nDef] = pick(wordsN, 2);
+
+    $('word2').textContent = w2;
+    $('word2Def').textContent = w2Def;
+    $('word3').textContent = n;
+    $('word3Def').textContent = nDef;
+
+    // Emoji che sale dal punto del click e svanisce
+    const popEmoji = (id, emoji) => $(id).addEventListener('click', function (e) {
+      const el = document.createElement('div');
+      el.className = 'pop';
+      el.textContent = emoji;
+      el.style.left = e.clientX + 'px';
+      el.style.top = e.clientY + 'px';
+      document.body.appendChild(el);
+
+      el.animate([
+        { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 1 },
+        { transform: 'translate(-50%, -150%) scale(1.3)', opacity: 1, offset: 0.4 },
+        { transform: 'translate(-50%, -250%) scale(1)', opacity: 0 },
+      ], { duration: 1200, easing: 'ease-out' }).onfinish = () => el.remove();
+    });
+
+    popEmoji('word', '🚗');
+    popEmoji('word2', '👂');
+    popEmoji('word3', '⛓️');
 
     const mode = Math.random();
 
     if (mode < 0.8) {
-      wordElement.textContent = todayWord;
+      $('word').textContent = a;
+      $('wordDef').textContent = aDef;
     } else if (mode < 0.9) {
-      wordElement.textContent = "The Game";
+      $('word').textContent = "The Game";
     } else {
-      wordElement.innerHTML = 'Never Gonna Give You Up<br><img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWwxNG5qajVtdWRxZmJwYWtzODR0dmpoZ2Fxc2pub2VwbGx4MWlkYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Vuw9m5wXviFIQ/giphy.gif" alt="Rick Astley GIF">';
+      $('word').innerHTML = 'Never Gonna Give You Up<br><img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWwxNG5qajVtdWRxZmJwYWtzODR0dmpoZ2Fxc2pub2VwbGx4MWlkYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Vuw9m5wXviFIQ/giphy.gif" alt="Rick Astley GIF">';
     }
+
+    // Con The Game o il Rickroll la pagina mostra solo quello
+    if (mode >= 0.8) {
+      for (const el of document.body.children) {
+        if (el.id !== 'word' && el.tagName !== 'SCRIPT') {
+          el.hidden = true;
+        }
+      }
+    }
+
+    // Ritardo del survey
+
+    // ponytail: fixed to 1 Nov 2026, local time
+    const start = new Date(2026, 10, 1);
+    const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, d.getDate());
+
+    const tick = function () {
+      const now = new Date();
+      let months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();
+
+      if (addMonths(start, months) > now) {
+        months--;
+      }
+
+      let rest = Math.floor((now - addMonths(start, months)) / 1000);
+      const seconds = rest % 60;
+      rest = Math.floor(rest / 60);
+      const minutes = rest % 60;
+      rest = Math.floor(rest / 60);
+      const hours = rest % 24;
+      const days = Math.floor(rest / 24);
+
+      // salta le unità a zero, i secondi restano sempre
+      const parts = [
+        [Math.floor(months / 12), 'anno', 'anni'],
+        [months % 12, 'mese', 'mesi'],
+        [days, 'giorno', 'giorni'],
+        [hours, 'ora', 'ore'],
+        [minutes, 'minuto', 'minuti'],
+      ]
+        .filter(([v]) => v > 0)
+        .map(([v, one, many]) => `${v} ${v === 1 ? one : many}`);
+
+      parts.push(`${seconds} ${seconds === 1 ? 'secondo' : 'secondi'}`);
+      $('elapsed').textContent = parts.join(', ');
+    };
+
+    tick();
+    setInterval(tick, 250); // a 1000 ms ogni tanto un secondo verrebbe saltato
+
+    // Polli e semi
+
+    const MAX_CHICKENS = 30;     // uova comprese
+    const FOOD_RADIUS = 250;     // px entro cui un pollo sente il mucchio
+    const PILE_SIZE = 10;        // semi per mucchio; un pollo ne mangia uno al secondo
+    const SEEDS_PER_DROP = 6;
+    const EGG_CHANCE = 0.4;      // altrimenti cacca; i pulcini fanno solo cacca
+    const POO_LIFE = 8000;       // ms
+    const HATCH_TIME = 15000;
+    const GROW_TIME = 60000;     // da pulcino a gallina
+    const STARVE_TIME = 60000;   // tanto si resiste senza mangiare
+    const GRAVE_LIFE = 10000;
+    const GHOST_CHANCE = 0.05;   // probabilità che da una lapide esca un fantasma
+    const FLEE_RADIUS = 150;     // px: più vicino di così al fantasma, si scappa
+    const GHOST_LIFE = 7000;
+    const OMELETTE_LIFE = 10000;
+    const ROAST_LIFE = 10000;
+
+    const chickens = [];
+    const piles = [];
+    const items = [];  // uova, cacche, lapidi, frittate: stanno fermi finché scadono
+    const ghosts = [];
+    let holding = false;
+    let aiming = false;
+
+    // Orologio del gioco: si ferma con la tab in background, sennò al ritorno sono tutti morti
+    let clock = 0;
+    let lastTs = null;
+
+    const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+    const clampX = x => Math.min(Math.max(x, 20), innerWidth - 20);
+    const clampY = y => Math.min(Math.max(y, 20), innerHeight - 20);
+    const eggCount = () => items.filter(it => it.kind === 'egg').length;
+    const isFull = () => chickens.length + eggCount() >= MAX_CHICKENS;
+
+    const addItem = function (kind, emoji, x, y, life) {
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.textContent = emoji;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      document.body.appendChild(el);
+
+      const it = { el, kind, x, y, until: clock + life };
+      items.push(it);
+
+      return it;
+    };
+
+    // Esce dalla lapide, vaga un po' e svanisce
+    const ghost = function (x, y) {
+      const el = document.createElement('div');
+      el.className = 'particle';
+      el.textContent = '👻';
+      el.style.fontSize = '32px';
+      el.style.left = '0';
+      el.style.top = '0';
+      document.body.appendChild(el);
+
+      ghosts.push({ el, x, y: y - 20, tx: x, ty: y - 80, born: clock, until: clock + GHOST_LIFE });
+    };
+
+    const setKind = function (c, kind) {
+      c.kind = kind;
+      c.size = kind === 'hen' ? 40 : 24;
+      c.el.textContent = kind === 'hen' ? '🐔' : '🐤';
+      c.el.style.fontSize = c.size + 'px';
+    };
+
+    const addChicken = function (kind, x, y) {
+      const el = document.createElement('div');
+      el.className = 'chicken';
+      document.body.appendChild(el);
+
+      const c = {
+        el,
+        x, y,
+        tx: x, ty: y,
+        wait: 0,
+        step: 0,
+        flip: false,
+        // posto fisso attorno al mucchio, sennò mangiano tutti uno sopra l'altro
+        ox: rand(-22, 22),
+        oy: rand(-10, 10),
+        born: clock,
+        lastMeal: clock,
+        bites: 0,
+        seeds: 0,
+      };
+
+      setKind(c, kind);
+      chickens.push(c);
+    };
+
+    const kill = function (c) {
+      c.el.remove();
+      chickens.splice(chickens.indexOf(c), 1);
+      const grave = addItem('grave', '🪦', c.x, c.y, GRAVE_LIFE);
+
+      if (Math.random() < GHOST_CHANCE) {
+        grave.ghostAt = clock + rand(1000, GRAVE_LIFE - 3000);
+      }
+    };
+
+    // Ogni SEEDS_PER_DROP semi: uovo o cacca
+    const drop = function (c) {
+      if (c.kind === 'hen' && !isFull() && Math.random() < EGG_CHANCE) {
+        addItem('egg', '🥚', c.x, c.y, HATCH_TIME);
+      } else {
+        addItem('poo', '💩', c.x, c.y, POO_LIFE);
+      }
+    };
+
+    $('counter').addEventListener('click', function (e) {
+      if (isFull()) {
+        return;
+      }
+
+      addChicken('hen', clampX(e.clientX), clampY(e.clientY));
+    });
+
+    // Semi e mirino si escludono a vicenda
+    const setTool = function (seed, gun) {
+      holding = seed;
+      aiming = gun;
+      document.body.classList.toggle('holding', holding);
+      document.body.classList.toggle('aiming', aiming);
+    };
+
+    $('seed').addEventListener('click', () => setTool(!holding, false));
+    $('gun').addEventListener('click', () => setTool(false, !aiming));
+
+    // Fiammata che sale e si spegne
+    const flame = function (x, y) {
+      const el = document.createElement('div');
+      el.className = 'particle';
+      el.textContent = '🔥';
+      el.style.fontSize = rand(20, 34) + 'px';
+      el.style.left = (x + rand(-12, 12)) + 'px';
+      el.style.top = y + 'px';
+      document.body.appendChild(el);
+
+      el.animate([
+        { transform: 'translate(-50%, -100%) scale(0.3)', opacity: 0 },
+        { transform: 'translate(-50%, -110%) scale(1.2)', opacity: 1, offset: 0.3 },
+        { transform: `translate(-50%, -${rand(160, 220)}%) scale(0.6)`, opacity: 0 },
+      ], { duration: rand(600, 1000), easing: 'ease-out' }).onfinish = () => el.remove();
+    };
+
+    // Tutti i polli diventano cosce, le uova frittate; niente lapidi né fantasmi
+    $('fire').addEventListener('click', function () {
+      for (const c of chickens) {
+        c.el.remove();
+        addItem('roast', '🍗', c.x, c.y, ROAST_LIFE);
+
+        for (let i = 0; i < 3; i++) {
+          flame(c.x, c.y);
+        }
+      }
+
+      chickens.length = 0;
+
+      for (const it of items) {
+        if (it.kind !== 'egg') {
+          continue;
+        }
+
+        it.kind = 'omelette';
+        it.el.textContent = '🍳';
+        it.until = clock + OMELETTE_LIFE;
+        flame(it.x, it.y);
+      }
+    });
+
+    // Esplosione: piume e sangue per i polli, guscio e tuorlo per le uova
+    const burst = function (x, y, feathers, colors) {
+      for (let i = 0; i < 18; i++) {
+        const el = document.createElement('div');
+        el.className = 'particle';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+
+        if (feathers && i % 3 === 0) {
+          el.textContent = '🪶';
+          el.style.fontSize = rand(12, 20) + 'px';
+        } else {
+          const r = rand(3, 7);
+          el.style.width = el.style.height = r + 'px';
+          el.style.borderRadius = '50%';
+          el.style.background = colors[i % colors.length];
+          el.style.boxShadow = '0 0 1px #0004';
+        }
+
+        document.body.appendChild(el);
+
+        const angle = rand(0, 2 * Math.PI);
+        const dist = rand(40, 130);
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        const spin = rand(-360, 360);
+
+        // l'ultimo tratto scende: le piume ricadono
+        el.animate([
+          { transform: 'translate(-50%, -50%)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${spin}deg)`, opacity: 1, offset: 0.6 },
+          { transform: `translate(calc(-50% + ${dx * 1.1}px), calc(-50% + ${dy + 40}px)) rotate(${spin * 1.5}deg)`, opacity: 0 },
+        ], { duration: rand(700, 1200), easing: 'cubic-bezier(.2, .8, .4, 1)' }).onfinish = () => el.remove();
+      }
+    };
+
+    // Colpisce il pollo o l'uovo più vicino, se il colpo cade dentro la sua emoji
+    const shoot = function (x, y) {
+      let target = null;
+      let isEgg = false;
+      let best = Infinity;
+
+      const consider = function (obj, egg, cx, cy, radius) {
+        const d = Math.hypot(cx - x, cy - y);
+
+        if (d < radius + 6 && d < best) {
+          best = d;
+          target = obj;
+          isEgg = egg;
+        }
+      };
+
+      for (const c of chickens) {
+        consider(c, false, c.x, c.y - c.size / 2, c.size / 2);
+      }
+
+      for (const it of items) {
+        if (it.kind === 'egg') {
+          consider(it, true, it.x, it.y - 13, 13);
+        }
+      }
+
+      addItem('boom', '💥', x, y + 12, 250);
+
+      if (!target) {
+        return;
+      }
+
+      if (isEgg) {
+        burst(target.x, target.y - 13, false, ['#fff', '#f5c518', '#fff']);
+        target.el.remove();
+        items.splice(items.indexOf(target), 1);
+        addItem('omelette', '🍳', target.x, target.y, OMELETTE_LIFE);
+      } else {
+        burst(target.x, target.y - target.size / 2, true, ['#c0392b', '#fff']);
+        kill(target);
+      }
+    };
+
+    // In capture: coi semi o il mirino in mano il click non deve far altro (es. far nascere un pollo)
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.tool')) {
+        return;
+      }
+
+      if (aiming) {
+        shoot(e.clientX, e.clientY);
+        e.stopPropagation();
+        return;
+      }
+
+      if (!holding) {
+        return;
+      }
+
+      const el = document.createElement('div');
+      el.className = 'pile';
+      document.body.appendChild(el);
+      piles.push({ el, x: e.clientX, y: e.clientY, amount: PILE_SIZE });
+
+      e.stopPropagation();
+    }, true);
+
+    const frame = function (ts) {
+      // tetto a 100 ms: dopo una pausa lunga il tempo non fa salti
+      const dt = lastTs === null ? 0 : Math.min(ts - lastTs, 100);
+      lastTs = ts;
+      clock += dt;
+
+      for (let i = chickens.length - 1; i >= 0; i--) {
+        const c = chickens[i];
+        const hunger = clock - c.lastMeal;
+
+        if (hunger > STARVE_TIME) {
+          kill(c);
+          continue;
+        }
+
+        if (c.kind === 'chick' && clock - c.born > GROW_TIME) {
+          setKind(c, 'hen');
+        }
+
+        let food = null;
+        let best = FOOD_RADIUS;
+
+        for (const p of piles) {
+          const d = Math.hypot(p.x - c.x, p.y - c.y);
+
+          if (d < best) {
+            best = d;
+            food = p;
+          }
+        }
+
+        let scary = null;
+        let scaryDist = FLEE_RADIUS;
+
+        for (const g of ghosts) {
+          const d = Math.hypot(g.x - c.x, g.y - c.y);
+
+          if (d < scaryDist) {
+            scaryDist = d;
+            scary = g;
+          }
+        }
+
+        let speed = 0.8;
+
+        if (scary) {
+          // la fame passa in secondo piano
+          const away = Math.atan2(c.y - scary.y, c.x - scary.x);
+          c.tx = clampX(c.x + Math.cos(away) * 80);
+          c.ty = clampY(c.y + Math.sin(away) * 80);
+          c.wait = 0;
+          speed = 3;
+          food = null;
+        } else if (food) {
+          c.tx = food.x + c.ox;
+          c.ty = food.y + c.oy;
+          c.wait = 0;
+          speed = 2.5;
+        } else if (c.wait > 0) {
+          c.wait--;
+        }
+
+        const dx = c.tx - c.x;
+        const dy = c.ty - c.y;
+        const dist = Math.hypot(dx, dy);
+        let peck = 0;
+
+        if (dist > speed) {
+          c.x += dx / dist * speed;
+          c.y += dy / dist * speed;
+          c.step++;
+
+          if (Math.abs(dx) > 0.5) {
+            c.flip = dx > 0; // l'emoji guarda a sinistra
+          }
+        } else if (food) {
+          food.amount -= dt / 1000;
+          c.bites += dt / 1000;
+          peck = (Math.floor(ts / 150) % 2) * 25;
+
+          if (c.bites >= 1) {
+            c.bites -= 1;
+            c.seeds++;
+            c.lastMeal = clock;
+          }
+
+          if (c.seeds >= SEEDS_PER_DROP) {
+            c.seeds = 0;
+            drop(c);
+          }
+        } else if (c.wait === 0) {
+          // razzola: una pausa, poi un punto lì vicino
+          c.wait = Math.floor(rand(30, 200));
+          c.tx = clampX(c.x + rand(-150, 150));
+          c.ty = clampY(c.y + rand(-150, 150));
+        }
+
+        const hop = dist > speed ? (Math.floor(c.step / 8) % 2) * -4 : 0;
+        c.el.style.opacity = hunger > STARVE_TIME * 0.75 ? 0.5 : 1; // sbiadito: sta per morire di fame
+        c.el.style.transform =
+          `translate(${c.x - c.size / 2}px, ${c.y - c.size + hop}px) scaleX(${c.flip ? -1 : 1}) rotate(${-peck}deg)`;
+      }
+
+      for (let i = piles.length - 1; i >= 0; i--) {
+        const p = piles[i];
+
+        if (p.amount <= 0) {
+          p.el.remove();
+          piles.splice(i, 1);
+          continue;
+        }
+
+        const scale = 0.3 + 0.7 * p.amount / PILE_SIZE;
+        p.el.style.transform = `translate(${p.x - 20}px, ${p.y - 10}px) scale(${scale})`;
+      }
+
+      for (let i = ghosts.length - 1; i >= 0; i--) {
+        const g = ghosts[i];
+
+        if (clock >= g.until) {
+          g.el.remove();
+          ghosts.splice(i, 1);
+          continue;
+        }
+
+        const dx = g.tx - g.x;
+        const dy = g.ty - g.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 0.7) {
+          g.x += dx / dist * 0.7;
+          g.y += dy / dist * 0.7;
+        } else {
+          g.tx = clampX(g.x + rand(-100, 100));
+          g.ty = clampY(g.y + rand(-60, 60));
+        }
+
+        // compare in mezzo secondo, sparisce nell'ultimo
+        const fade = Math.min(1, (clock - g.born) / 500, (g.until - clock) / 1000);
+        const bob = Math.sin(ts / 300) * 5;
+        g.el.style.opacity = fade * 0.85;
+        g.el.style.transform = `translate(${g.x - 16}px, ${g.y - 16 + bob}px)`;
+      }
+
+      for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+
+        if (it.ghostAt && clock >= it.ghostAt) {
+          it.ghostAt = null;
+          ghost(it.x, it.y);
+        }
+
+        if (clock < it.until) {
+          continue;
+        }
+
+        it.el.remove();
+        items.splice(i, 1);
+
+        if (it.kind === 'egg') {
+          addChicken('chick', it.x, it.y);
+        }
+      }
+
+      requestAnimationFrame(frame);
+    };
+
+    requestAnimationFrame(frame);
   </script>
 </body>
 
