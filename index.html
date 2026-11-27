@@ -20,8 +20,9 @@
       flex-direction: column;
     }
 
-    body.holding,
-    body.aiming {
+    body[data-tool="seed"],
+    body[data-tool="gun"],
+    body[data-tool="degree"] {
       cursor: crosshair;
     }
 
@@ -56,6 +57,14 @@
       font-size: 3rem;
       pointer-events: none;
       z-index: 4;
+    }
+
+    .person {
+      position: fixed;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+      z-index: 2;
     }
 
     .particle {
@@ -127,8 +136,13 @@
       left: 5.5rem;
     }
 
-    body.holding #seed,
-    body.aiming #gun {
+    #degree {
+      left: 10rem;
+    }
+
+    body[data-tool="seed"] #seed,
+    body[data-tool="gun"] #gun,
+    body[data-tool="degree"] #degree {
       border-color: #c8902e;
     }
 
@@ -156,9 +170,20 @@
     <div class="large-text" id="elapsed" style="font-size: 2rem">---</div>
   </div>
 
+  <div class="counter" id="leave1" title="Clicca">
+    <div class="small-text" id="leave1Label"></div>
+    <div class="large-text" id="leave1Days" style="font-size: 2rem">---</div>
+  </div>
+
+  <div class="counter" id="leave2" title="Clicca">
+    <div class="small-text" id="leave2Label"></div>
+    <div class="large-text" id="leave2Days" style="font-size: 2rem">---</div>
+  </div>
+
   <button class="tool" id="seed" title="Prendi un po' di semi">🌾</button>
   <button class="tool" id="gun" title="Spara ai polli">🎯</button>
   <button class="tool" id="fire" title="Cuoci tutti i polli">🔥</button>
+  <button class="tool" id="degree" title="Lascia un titolo di studio">🎓</button>
 
   <script>
     const wordsA = {
@@ -658,6 +683,11 @@
     const start = new Date(2026, 10, 1);
     const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, d.getDate());
 
+    const departures = [
+      { id: 'leave1', who: 'il primo', date: new Date(2026, 10, 30) },
+      { id: 'leave2', who: 'il secondo', date: new Date(2026, 11, 28) },
+    ];
+
     const tick = function () {
       const now = new Date();
       let months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();
@@ -687,6 +717,19 @@
 
       parts.push(`${seconds} ${seconds === 1 ? 'secondo' : 'secondi'}`);
       $('elapsed').textContent = parts.join(', ');
+
+      // giorni di calendario, non blocchi di 24 ore da adesso
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      for (const d of departures) {
+        const days = Math.round((d.date - midnight) / 86400000);
+        const n = Math.abs(days);
+
+        $(d.id + 'Label').textContent = days > 0
+          ? `Giorni a quando se ne va ${d.who}:`
+          : `Giorni da quando se n'è andato ${d.who}:`;
+        $(d.id + 'Days').textContent = `${n} ${n === 1 ? 'giorno' : 'giorni'}`;
+      }
     };
 
     tick();
@@ -714,8 +757,8 @@
     const piles = [];
     const items = [];  // uova, cacche, lapidi, frittate: stanno fermi finché scadono
     const ghosts = [];
-    let holding = false;
-    let aiming = false;
+    let tool = null;  // 'seed', 'gun', 'degree' o niente
+    let diploma = null;  // uno solo in pagina
 
     // Orologio del gioco: si ferma con la tab in background, sennò al ritorno sono tutti morti
     let clock = 0;
@@ -786,15 +829,130 @@
       chickens.push(c);
     };
 
-    const kill = function (c) {
-      c.el.remove();
-      chickens.splice(chickens.indexOf(c), 1);
-      const grave = addItem('grave', '🪦', c.x, c.y, GRAVE_LIFE);
+    const addGrave = function (x, y) {
+      const grave = addItem('grave', '🪦', x, y, GRAVE_LIFE);
 
       if (Math.random() < GHOST_CHANCE) {
         grave.ghostAt = clock + rand(1000, GRAVE_LIFE - 3000);
       }
     };
+
+    const kill = function (c) {
+      c.el.remove();
+      chickens.splice(chickens.indexOf(c), 1);
+      addGrave(c.x, c.y);
+    };
+
+    // I due che se ne vanno: il primo piccolo e svelto, il secondo biondo e grosso
+    const PEOPLE = {
+      leave1: { hair: '#3b2a1a', shirt: '#2e86de', height: 40, speed: 3, eatsRoast: false, likesDiploma: true },
+      leave2: { hair: '#f2d16b', shirt: '#c0392b', height: 64, speed: 1.5, eatsRoast: true, likesDiploma: false, hp: 3 },
+    };
+
+    // Barra vita sopra la testa, solo per chi ha più di un colpo
+    const setBar = function (man) {
+      if (man.bar) {
+        man.bar.firstChild.style.width = man.hp / man.maxHp * 100 + '%';
+      }
+    };
+
+    const PANIC_RADIUS = 220;  // px dal mirino entro cui i tizi scappano
+    const EAT_TIME = 3000;       // ms per finire una coscia, fermo
+    const GRADUATE_TIME = 5000;  // ms per laurearsi, fermo
+
+    const people = [];
+
+    // Fine pasto o fine laurea. Il bersaglio può essere sparito nel frattempo (coscia scaduta).
+    const finishTask = function (man) {
+      const { kind, target } = man.task;
+      man.task = null;
+
+      if (kind === 'eat' && items.includes(target)) {
+        target.el.remove();
+        items.splice(items.indexOf(target), 1);
+        man.hp = man.maxHp; // il pollo ripristina la vita
+        setBar(man);
+      }
+
+      if (kind === 'graduate' && diploma === target) {
+        diploma.el.remove();
+        diploma = null;
+
+        const el = document.createElement('div');
+        el.className = 'particle';
+        el.textContent = '🎓';
+        el.style.fontSize = '28px';
+        el.style.left = man.x + 'px';
+        el.style.top = (man.y - man.h) + 'px';
+        document.body.appendChild(el);
+
+        el.animate([
+          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 1 },
+          { transform: 'translate(-50%, -200%) scale(1.4) rotate(-20deg)', opacity: 1, offset: 0.5 },
+          { transform: 'translate(-50%, -300%) scale(1) rotate(15deg)', opacity: 0 },
+        ], { duration: 1500, easing: 'ease-out' }).onfinish = () => el.remove();
+      }
+    };
+
+    // Serve per sapere dove punta il mirino
+    let mouseX = -1e4;
+    let mouseY = -1e4;
+
+    document.addEventListener('pointermove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    const personSvg = (hair, shirt) => `
+      <svg viewBox="0 0 20 40" width="100%" height="100%">
+        <line x1="8" y1="28" x2="6" y2="39" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="12" y1="28" x2="14" y2="39" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+        <rect x="5" y="13" width="10" height="16" rx="3" fill="${shirt}"/>
+        <circle cx="10" cy="8" r="5" fill="#f1c27d"/>
+        <path d="M4.6 8.5 A5.4 5.4 0 0 1 15.4 8.5 Q10 5 4.6 8.5 Z" fill="${hair}"/>
+      </svg>`;
+
+    for (const id of Object.keys(PEOPLE)) {
+      $(id).addEventListener('click', function (e) {
+        // uno solo per tipo
+        if (people.some(man => man.id === id)) {
+          return;
+        }
+
+        const look = PEOPLE[id];
+        const el = document.createElement('div');
+        el.className = 'person';
+        el.style.width = look.height / 2 + 'px';
+        el.style.height = look.height + 'px';
+        el.innerHTML = personSvg(look.hair, look.shirt);
+        document.body.appendChild(el);
+
+        const x = clampX(e.clientX);
+        const y = clampY(e.clientY);
+        const maxHp = look.hp || 1;
+        let bar = null;
+
+        if (maxHp > 1) {
+          bar = document.createElement('div');
+          bar.style.cssText = 'position:absolute;left:-4px;right:-4px;top:-8px;height:4px;background:#ddd;border-radius:2px;overflow:hidden';
+          bar.innerHTML = '<div style="height:100%;width:100%;background:#2ecc71"></div>';
+          el.appendChild(bar);
+        }
+
+        people.push({
+          id, el, bar, maxHp, hp: maxHp,
+          x, y,
+          tx: x, ty: y,
+          wait: 0,
+          step: 0,
+          task: null,  // mangiare o laurearsi: finché dura sta fermo
+          h: look.height,
+          speed: look.speed,
+          eatsRoast: look.eatsRoast,
+          likesDiploma: look.likesDiploma,
+        });
+      });
+    }
 
     // Ogni SEEDS_PER_DROP semi: uovo o cacca
     const drop = function (c) {
@@ -814,15 +972,31 @@
     });
 
     // Semi e mirino si escludono a vicenda
-    const setTool = function (seed, gun) {
-      holding = seed;
-      aiming = gun;
-      document.body.classList.toggle('holding', holding);
-      document.body.classList.toggle('aiming', aiming);
+    // Un attrezzo alla volta; ricliccarlo lo posa
+    const setTool = function (name) {
+      tool = tool === name ? null : name;
+      document.body.dataset.tool = tool || '';
     };
 
-    $('seed').addEventListener('click', () => setTool(!holding, false));
-    $('gun').addEventListener('click', () => setTool(false, !aiming));
+    $('seed').addEventListener('click', () => setTool('seed'));
+    $('gun').addEventListener('click', () => setTool('gun'));
+    $('degree').addEventListener('click', () => setTool('degree'));
+
+    // Un nuovo titolo sostituisce quello vecchio
+    const placeDiploma = function (x, y) {
+      if (!diploma) {
+        const el = document.createElement('div');
+        el.className = 'item';
+        el.textContent = '📜';
+        document.body.appendChild(el);
+        diploma = { el };
+      }
+
+      diploma.x = x;
+      diploma.y = y;
+      diploma.el.style.left = x + 'px';
+      diploma.el.style.top = y + 'px';
+    };
 
     // Fiammata che sale e si spegne
     const flame = function (x, y) {
@@ -902,30 +1076,34 @@
       }
     };
 
-    // Colpisce il pollo o l'uovo più vicino, se il colpo cade dentro la sua emoji
+    // Colpisce il bersaglio più vicino, se il colpo cade dentro la sua sagoma
     const shoot = function (x, y) {
       let target = null;
-      let isEgg = false;
+      let type = null;
       let best = Infinity;
 
-      const consider = function (obj, egg, cx, cy, radius) {
+      const consider = function (obj, objType, cx, cy, radius) {
         const d = Math.hypot(cx - x, cy - y);
 
         if (d < radius + 6 && d < best) {
           best = d;
           target = obj;
-          isEgg = egg;
+          type = objType;
         }
       };
 
       for (const c of chickens) {
-        consider(c, false, c.x, c.y - c.size / 2, c.size / 2);
+        consider(c, 'chicken', c.x, c.y - c.size / 2, c.size / 2);
       }
 
       for (const it of items) {
         if (it.kind === 'egg') {
-          consider(it, true, it.x, it.y - 13, 13);
+          consider(it, 'egg', it.x, it.y - 13, 13);
         }
+      }
+
+      for (const man of people) {
+        consider(man, 'person', man.x, man.y - man.h / 2, man.h / 2);
       }
 
       addItem('boom', '💥', x, y + 12, 250);
@@ -934,30 +1112,44 @@
         return;
       }
 
-      if (isEgg) {
+      if (type === 'egg') {
         burst(target.x, target.y - 13, false, ['#fff', '#f5c518', '#fff']);
         target.el.remove();
         items.splice(items.indexOf(target), 1);
         addItem('omelette', '🍳', target.x, target.y, OMELETTE_LIFE);
+      } else if (type === 'person') {
+        burst(target.x, target.y - target.h / 2, false, ['#c0392b', '#8e1b10']);
+        target.hp--;
+        setBar(target);
+
+        if (target.hp > 0) {
+          return;
+        }
+
+        target.el.remove();
+        people.splice(people.indexOf(target), 1);
+        addGrave(target.x, target.y);
       } else {
         burst(target.x, target.y - target.size / 2, true, ['#c0392b', '#fff']);
         kill(target);
       }
     };
 
-    // In capture: coi semi o il mirino in mano il click non deve far altro (es. far nascere un pollo)
+    // In capture: con un attrezzo in mano il click non deve far altro (es. far nascere un pollo)
     document.addEventListener('click', function (e) {
-      if (e.target.closest('.tool')) {
+      if (!tool || e.target.closest('.tool')) {
         return;
       }
 
-      if (aiming) {
+      e.stopPropagation();
+
+      if (tool === 'gun') {
         shoot(e.clientX, e.clientY);
-        e.stopPropagation();
         return;
       }
 
-      if (!holding) {
+      if (tool === 'degree') {
+        placeDiploma(e.clientX, e.clientY);
         return;
       }
 
@@ -965,8 +1157,6 @@
       el.className = 'pile';
       document.body.appendChild(el);
       piles.push({ el, x: e.clientX, y: e.clientY, amount: PILE_SIZE });
-
-      e.stopPropagation();
     }, true);
 
     const frame = function (ts) {
@@ -1083,6 +1273,81 @@
 
         const scale = 0.3 + 0.7 * p.amount / PILE_SIZE;
         p.el.style.transform = `translate(${p.x - 20}px, ${p.y - 10}px) scale(${scale})`;
+      }
+
+      // I tizi girano a caso; col mirino addosso scappano, il biondo va dritto alle cosce,
+      // il primo al titolo di studio. Mentre mangiano o si laureano non li smuove niente.
+      for (const man of people) {
+        if (man.task) {
+          man.task.left -= dt;
+          man.step++; // mastica o si agita: riusa il saltello
+
+          if (man.task.left <= 0) {
+            finishTask(man);
+          }
+
+          const hop = (Math.floor(man.step / 6) % 2) * -3;
+          man.el.style.transform = `translate(${man.x - man.h / 4}px, ${man.y - man.h + hop}px)`;
+          continue;
+        }
+
+        let speed = man.speed;
+        let meal = null;
+        let goal = null;
+
+        if (tool === 'gun' && Math.hypot(man.x - mouseX, man.y - mouseY) < PANIC_RADIUS) {
+          // un po' di zig-zag, sennò lungo il muro sono bersagli fermi
+          const away = Math.atan2(man.y - mouseY, man.x - mouseX) + rand(-0.8, 0.8);
+          man.tx = clampX(man.x + Math.cos(away) * 120);
+          man.ty = clampY(man.y + Math.sin(away) * 120);
+          man.wait = 0;
+          speed *= 3;
+        } else if (man.eatsRoast) {
+          let best = Infinity;
+
+          for (const it of items) {
+            const d = Math.hypot(it.x - man.x, it.y - man.y);
+
+            if (it.kind === 'roast' && d < best) {
+              best = d;
+              meal = it;
+            }
+          }
+
+          if (meal) {
+            man.tx = meal.x;
+            man.ty = meal.y;
+            man.wait = 0;
+          }
+        } else if (man.likesDiploma && diploma) {
+          goal = diploma;
+          man.tx = clampX(diploma.x + 16); // accanto, non sopra
+          man.ty = diploma.y;
+          man.wait = 0;
+        }
+
+        const dx = man.tx - man.x;
+        const dy = man.ty - man.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > speed) {
+          man.x += dx / dist * speed;
+          man.y += dy / dist * speed;
+          man.step++;
+        } else if (meal) {
+          man.task = { kind: 'eat', target: meal, left: EAT_TIME };
+        } else if (goal) {
+          man.task = { kind: 'graduate', target: goal, left: GRADUATE_TIME };
+        } else if (man.wait > 0) {
+          man.wait--;
+        } else {
+          man.wait = Math.floor(rand(20, 120));
+          man.tx = clampX(man.x + rand(-250, 250));
+          man.ty = clampY(man.y + rand(-200, 200));
+        }
+
+        const hop = dist > speed ? (Math.floor(man.step / 6) % 2) * -3 : 0;
+        man.el.style.transform = `translate(${man.x - man.h / 4}px, ${man.y - man.h + hop}px)`;
       }
 
       for (let i = ghosts.length - 1; i >= 0; i--) {
